@@ -8,7 +8,8 @@
     "prettier": "npx prettier --write .",
     "lint": "eslint --ext .ts,vue --ignore-path .gitignore .",
     "vitest": "vitest run",
-    "vitest:watch": "vitest"
+    "vitest:watch": "vitest",
+    "build:github-pages": "vite build --base=/ui-tour"
   },
   "dependencies": {
     "@floating-ui/vue": "^1.0.2",
