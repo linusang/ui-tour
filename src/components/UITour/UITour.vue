@@ -2,7 +2,7 @@
   import { computed, defineComponent, h, provide, ref, VNode } from "vue";
 
   import { UI_TOUR_CONTEXT_KEY } from "./share";
-  import type { UITourExposed } from "./types";
+  import type { UITourExposed, UITourStopContext } from "./types";
   import UITourInternal from "./UITourInternal.vue";
   import UITourStop from "./UITourStop.vue";
 
@@ -41,12 +41,17 @@
         currentIndex.value = -1;
       }
 
+      function registerStop(_: UITourStopContext) {
+        return -1;
+      }
+
       provide(UI_TOUR_CONTEXT_KEY, {
         prev,
         next,
         exit,
         currentIndex: computed(() => currentIndex.value),
         totalStops: noOfStops,
+        registerStop,
       });
 
       const instance: UITourExposed = { start };

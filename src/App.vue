@@ -2,10 +2,10 @@
   import { ref } from "vue";
 
   import { UITourExposed } from "./components/UITour/types";
-  import UITour from "./components/UITour/UITour.vue";
-  import UITourStop from "./components/UITour/UITourStop.vue";
+  import UITour from "./components/UITour/UITour2.vue";
+  import UITourStop from "./components/UITour/UITourStop2.vue";
 
-  const uiTour = ref<UITourExposed>();
+  const uiTour = ref<InstanceType<typeof UITour>>();
 
   function startTour() {
     uiTour.value?.start();

@@ -10,24 +10,23 @@
     useFloating,
   } from "@floating-ui/vue";
   import { useElementBounding, useElementSize } from "@vueuse/core";
-  import type { StyleValue } from "vue";
-  import { computed, nextTick, onMounted, ref, watch } from "vue";
+  import { computed, nextTick, onMounted, provide, ref, watch } from "vue";
 
   import { assertIsDefined } from "@/share/assertHelpers";
+
+  import { UI_TOUR_INTERNAL_CONTEXT_KEY } from "./share";
 
   const props = withDefaults(
     defineProps<{
       teleportTo?: string;
       currentIndex?: number;
       placement?: Placement | "modal";
-      elementId?: string;
       spotlightPadding?: number;
     }>(),
     {
       teleportTo: "body",
       currentIndex: -1,
       placement: "bottom",
-      elementId: undefined,
       spotlightPadding: 10,
     }
   );
@@ -144,12 +143,8 @@
     spotlight.value?.classList.remove("spotlight");
   }
 
-  defineExpose({
-    exit,
-  });
-
-  async function showFloatingContent() {
-    const element = document.getElementById(props.elementId ?? "");
+  async function showFloatingContent(elementId?: string) {
+    const element = document.getElementById(elementId ?? "");
     if (element) {
       currentTargetElement.value = element;
       showContent.value = false;
@@ -168,6 +163,8 @@
       showContent.value = true;
       await nextTick();
       floatingContent.value?.classList.add("show");
+    } else {
+      console.log(`element ${elementId} not found`);
     }
   }
 
@@ -183,20 +180,51 @@
     modal.value?.classList.add("show");
   }
 
+  function setFloating(el: HTMLElement) {
+    floating.value = el;
+  }
+
+  function setFloatingContent(el: HTMLElement) {
+    floatingContent.value = el;
+  }
+
+  function setModal(el: HTMLElement) {
+    modal.value = el;
+  }
+
+  function setFloatingArrow(el: HTMLElement) {
+    floatingArrow.value = el;
+  }
+
+  provide(UI_TOUR_INTERNAL_CONTEXT_KEY, {
+    showFloatingContent,
+    showModalContent,
+    showContent,
+    setFloating,
+    setFloatingContent,
+    setModal,
+    setFloatingArrow,
+    computedFloatingStyles,
+    arrowPositionStyles,
+  });
+
+  defineExpose({
+    exit,
+  });
+
   watch(
     () => props.currentIndex,
     async (newVal) => {
-      console.log("currentIndex", newVal);
       if (newVal === -1) {
         currentTargetElement.value = overlay.value;
         showContent.value = false;
         return;
       }
-      if (props.placement !== "modal") {
-        await showFloatingContent();
-      } else {
-        await showModalContent();
-      }
+      // if (props.placement !== "modal") {
+      //   await showFloatingContent();
+      // } else {
+      //   await showModalContent();
+      // }
     }
   );
 
@@ -242,40 +270,7 @@
         />
       </svg>
 
-      <div
-        v-if="showContent && props.placement !== 'modal'"
-        ref="floating"
-        :style="(computedFloatingStyles as StyleValue)"
-      >
-        <div
-          ref="floatingContent"
-          class="floating-content"
-          :data-placement="placement"
-        >
-          <slot />
-          <div
-            ref="floatingArrow"
-            class="absolute h-[15px] w-[15px] rotate-45 bg-white"
-            :style="arrowPositionStyles"
-          ></div>
-        </div>
-      </div>
-
-      <div
-        v-if="showContent && props.placement === 'modal'"
-        class="fixed inset-0 flex h-full items-center justify-center"
-      >
-        <div ref="modal" class="modal">
-          <slot />
-        </div>
-      </div>
-
-      <!-- debug -->
-      <!-- <div
-        class="absolute right-0 top-0 mr-auto border border-gray-300 bg-white p-4 text-xs"
-      >
-        <pre>{{ computedFloatingStyles }}</pre>
-      </div> -->
+      <slot />
     </div>
   </Teleport>
 </template>
@@ -283,42 +278,5 @@
 <style scoped>
   .spotlight {
     transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
-  }
-
-  .btn {
-    @apply rounded bg-gray-300 px-2 py-1 hover:bg-gray-200;
-  }
-
-  .floating-content {
-    transition: transform 0.2s cubic-bezier(0.075, 0.82, 0.165, 1),
-      opacity 0.2s linear;
-  }
-
-  .floating-content[data-placement="top"] {
-    @apply -translate-y-5 opacity-0;
-  }
-  .floating-content[data-placement="bottom"] {
-    @apply translate-y-5 opacity-0;
-  }
-  .floating-content[data-placement="left"] {
-    @apply -translate-x-5 opacity-0;
-  }
-  .floating-content[data-placement="right"] {
-    @apply translate-x-5 opacity-0;
-  }
-
-  .floating-content[data-placement="top"].show,
-  .floating-content[data-placement="right"].show,
-  .floating-content[data-placement="bottom"].show,
-  .floating-content[data-placement="left"].show {
-    @apply translate-x-0 translate-y-0 opacity-100;
-  }
-
-  .modal {
-    @apply opacity-0;
-    transition: opacity 0.2s linear;
-  }
-  .modal.show {
-    @apply scale-100 opacity-100;
   }
 </style>
